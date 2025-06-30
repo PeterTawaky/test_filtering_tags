@@ -27,7 +27,7 @@ List<TagDataModel> getFilteredTags(List<TagDataModel> excelTags) {
     if (tag.tagName == 'StartButton' ||
         tag.tagName == 'StopButton' ||
         tag.tagName == 'Button' ||
-        tag.tagName == 'end') {
+        tag.tagName == 'cry') {
       filteredTags.add(tag);
     }
   }
