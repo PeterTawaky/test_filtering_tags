@@ -6,8 +6,10 @@ import 'package:test_filtering_tags/cubit/tia_cubit.dart';
 import 'package:test_filtering_tags/home_view.dart';
 import 'package:test_filtering_tags/models/excel_data_model.dart';
 import 'package:test_filtering_tags/service/excel_service.dart';
+import 'package:test_filtering_tags/service/plc_service.dart';
 
 void main() async {
+  // PLCService.disconnect();
   WidgetsFlutterBinding.ensureInitialized();
   List<TagDataModel> excelTags = await ExcelService.readExcelData(
     localExcelPath: 'assets/tags.xlsx',
@@ -24,7 +26,8 @@ List<TagDataModel> getFilteredTags(List<TagDataModel> excelTags) {
   for (var tag in excelTags) {
     if (tag.tagName == 'StartButton' ||
         tag.tagName == 'StopButton' ||
-        tag.tagName == 'Button') {
+        tag.tagName == 'Button' ||
+        tag.tagName == 'end') {
       filteredTags.add(tag);
     }
   }
@@ -38,7 +41,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<TiaCubit>(
-      create: (context) => TiaCubit()..connectToPLC(tagsData: filteredTags),
+      create: (context) => TiaCubit(filteredTags)..connectToPLC(),
       child: MaterialApp(home: HomeView()),
     );
   }

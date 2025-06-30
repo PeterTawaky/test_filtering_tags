@@ -16,39 +16,42 @@ class TiaCubit extends Cubit<TiaState> {
   Timer? _readTimer;
   bool _shouldKeepReading = false;
   List<CubitDataModel> cubitData = [];
-  TiaCubit() : super(TiaInitial());
-  
 
-  Future<void> connectToPLC({required List<TagDataModel> tagsData}) async {
-    log(tagsData.length.toString());
+  /// NEW: accept your tags here
+  TiaCubit(List<TagDataModel> tagsData) : super(TiaInitial()) {
+    // Build all your controllers & focusNodes immediately:
+    cubitData = tagsData
+        .map(
+          (t) => CubitDataModel(
+            tagName: t.tagName,
+            controller: TextEditingController(),
+            focusNode: FocusNode(),
+            type: switchToTagType(t.type),
+            address: t.address,
+            access: t.access,
+            acquistion: t.acquistion,
+            description: t.description,
+          ),
+        )
+        .toList();
+
+    // then kick off the PLC connection & start reading
+    connectToPLC();
+  }
+
+  Future<void> connectToPLC() async {
+    PLCService.disconnect(); //should be called before connect
     final success = await PLCService.connect("192.168.0.1", 0, 1);
     isConnected = success;
     if (success) {
-      fillCubitData(tagsData: tagsData);
+      _startContinuousReading();
       log('connected to PLC successfully');
     } else {
       log('Connection failed with PLC');
     }
   }
 
-  fillCubitData({required List<TagDataModel> tagsData}) {
-    cubitData = List.generate(
-      tagsData.length,
-      (index) => CubitDataModel(
-        tagName: tagsData[index].tagName,
-        controller: TextEditingController(),
-        focusNode: FocusNode(),
-        type: switchToTagType(tagsData[index].type),
-        address: tagsData[index].address,
-        access: tagsData[index].access,
-        acquistion: tagsData[index].acquistion,
-        description: tagsData[index].description,
-      ),
-    );
-    _startContinuousReading(cubitData: cubitData);
-  }
-
-  void _startContinuousReading({required List<CubitDataModel> cubitData}) {
+  void _startContinuousReading() {
     _shouldKeepReading = true;
 
     _readTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
@@ -57,11 +60,11 @@ class TiaCubit extends Cubit<TiaState> {
         return;
       }
       // log('again reading');
-      readAllValues(cubitData: cubitData);
+      readAllValues();
     });
   }
 
-  Future<void> readAllValues({required List<CubitDataModel> cubitData}) async {
+  Future<void> readAllValues() async {
     if (!isConnected) return;
 
     try {
